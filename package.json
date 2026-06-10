@@ -1,0 +1,46 @@
+{
+  "name": "@smart-loader/core",
+  "version": "0.1.0",
+  "description": "Framework-agnostic document loader for LLM and agent workflows.",
+  "type": "module",
+  "bin": {
+    "smart-loader": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run tests",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "csv-parse": "^5.5.6",
+    "fast-glob": "^3.3.2",
+    "mammoth": "^1.8.0",
+    "pdf-parse": "^2.4.5",
+    "turndown": "^7.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/pdfkit": "^0.17.6",
+    "@types/turndown": "^5.0.5",
+    "pdfkit": "^0.19.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.8"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}
