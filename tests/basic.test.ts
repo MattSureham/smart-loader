@@ -4,7 +4,9 @@ import os from "node:os";
 import path from "node:path";
 import PDFDocument from "pdfkit";
 import { describe, expect, it } from "vitest";
-import { loadPath, splitText } from "../src/index.js";
+import { generateOcrPreviewHtml, loadPath, splitText } from "../src/index.js";
+import { evaluateOcrRecords } from "../src/ocr/eval.js";
+import type { OcrResult } from "../src/ocr/types.js";
 
 describe("smart-loader", () => {
   it("loads text-native files from a folder", async () => {
@@ -41,6 +43,124 @@ describe("smart-loader", () => {
     expect(result.errors).toEqual([]);
     expect(document?.format).toBe("pdf");
     expect(document?.text).toContain("Hello from a generated PDF.");
+  });
+
+  it("evaluates OCR predictions with traceability metadata", () => {
+    const result = evaluateOcrRecords(
+      [
+        {
+          id: "chunk-1",
+          text: "Hello world",
+          metadata: {
+            relativePath: "scan.pdf",
+            page: 1,
+            bbox: { x: 10, y: 10, width: 100, height: 30, unit: "px" }
+          }
+        }
+      ],
+      [
+        {
+          id: "chunk-1",
+          text: "Hello world",
+          bbox: { x: 10, y: 10, width: 100, height: 30, unit: "px" }
+        }
+      ]
+    );
+
+    expect(result.charErrorRate).toBe(0);
+    expect(result.wordErrorRate).toBe(0);
+    expect(result.traceabilityRate).toBe(1);
+    expect(result.bboxAccuracyAt50).toBe(1);
+  });
+
+  it("generates an OCR preview with embedded chunk data", () => {
+    const preview = generateOcrPreviewHtml({
+      rootPath: "/tmp",
+      backend: "tesseract",
+      documents: [
+        {
+          id: "doc-1",
+          sourcePath: "/tmp/scan.pdf",
+          relativePath: "scan.pdf",
+          format: "pdf",
+          backend: "tesseract",
+          text: "Hello",
+          markdown: "Hello",
+          warnings: [],
+          metadata: {
+            sizeBytes: 10,
+            modifiedAt: new Date(0).toISOString(),
+            pageCount: 1
+          },
+          pages: [
+            {
+              pageNumber: 1,
+              imagePath: "/tmp/page-1.png",
+              width: 200,
+              height: 100,
+              text: "Hello",
+              markdown: "Hello",
+              blocks: [],
+              warnings: []
+            }
+          ],
+          chunks: [
+            {
+              id: "chunk-1",
+              documentId: "doc-1",
+              text: "Hello",
+              markdown: "Hello",
+              index: 0,
+              metadata: {
+                sourcePath: "/tmp/scan.pdf",
+                relativePath: "scan.pdf",
+                format: "pdf",
+                backend: "tesseract",
+                page: 1,
+                bbox: { x: 10, y: 10, width: 100, height: 30, unit: "px" },
+                pageImagePath: "/tmp/page-1.png",
+                tokenEstimate: 2,
+                startChar: 0,
+                endChar: 5
+              }
+            }
+          ]
+        }
+      ],
+      chunks: [
+        {
+          id: "chunk-1",
+          documentId: "doc-1",
+          text: "Hello",
+          markdown: "Hello",
+          index: 0,
+          metadata: {
+            sourcePath: "/tmp/scan.pdf",
+            relativePath: "scan.pdf",
+            format: "pdf",
+            backend: "tesseract",
+            page: 1,
+            bbox: { x: 10, y: 10, width: 100, height: 30, unit: "px" },
+            pageImagePath: "/tmp/page-1.png",
+            tokenEstimate: 2,
+            startChar: 0,
+            endChar: 5
+          }
+        }
+      ],
+      errors: [],
+      summary: {
+        discoveredFiles: 1,
+        loadedFiles: 1,
+        skippedFiles: 0,
+        failedFiles: 0,
+        pages: 1,
+        chunks: 1
+      }
+    } satisfies OcrResult);
+
+    expect(preview).toContain("smart-loader OCR Preview");
+    expect(preview).toContain("chunk-1");
   });
 });
 

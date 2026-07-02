@@ -48,6 +48,51 @@ PDF page rendering can be enabled when `pdftoppm` from Poppler is installed:
 node dist/cli.js ./docs --pdf-render-pages --pdf-max-pages 10
 ```
 
+### OCR CLI
+
+The OCR demo scans PDFs and images, renders PDF pages when needed, runs a
+selected OCR backend, and emits JSONL chunks with `relativePath`, `page`,
+`bbox`, `pageImagePath`, and backend metadata.
+
+```bash
+node dist/cli.js ocr ./docs --backend tesseract --language eng --out corpus.jsonl
+node dist/cli.js ocr ./docs --backend paddle --out corpus.jsonl --preview preview.html
+```
+
+Supported backend adapters:
+
+- `tesseract`: baseline CLI backend using TSV output for word and line bboxes.
+- `paddle`: calls `paddleocr pp_structurev3` and normalizes JSON/Markdown,
+  layout blocks, OCR boxes, and table HTML where present.
+- `surya`: calls `surya_ocr` and normalizes block HTML, reading order, labels,
+  and bboxes.
+- `doctr`: calls Python with `python-doctr` installed and normalizes exported
+  word geometry.
+
+PDF OCR requires Poppler's `pdftoppm` because OCR backends operate on rendered
+page images in this demo. Use `--pdf-max-pages` and `--pdf-dpi` to tune page
+limits and rendering quality.
+
+The preview file is a static HTML page. Open it locally and click a chunk to
+jump to the rendered source page and highlight the chunk bbox.
+
+### OCR evaluation
+
+Use `ocr-eval` to compare prediction JSON/JSONL with a small gold set:
+
+```bash
+node dist/cli.js ocr-eval corpus.jsonl --gold eval/gold.jsonl
+```
+
+Gold records can be one JSON object per line:
+
+```json
+{"id":"doc_1_ocr_chunk_1","relativePath":"contract.pdf","page":1,"chunkIndex":0,"text":"Agreement...","bbox":{"x":40,"y":80,"width":420,"height":120,"unit":"px"}}
+```
+
+The evaluator reports CER, WER, optional table token F1, optional bbox IoU, and
+RAG traceability rate based on chunks that carry path, page, and bbox metadata.
+
 ## SDK
 
 ```ts

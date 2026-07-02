@@ -16,8 +16,10 @@ import type {
 import { documentId, extensionOf } from "./utils.js";
 
 export type * from "./types.js";
+export type * from "./ocr/types.js";
 export { SUPPORTED_EXTENSIONS };
 export { splitText } from "./chunk.js";
+export { runOcrFile, runOcrPath, OCR_INPUT_EXTENSIONS, generateOcrPreviewHtml, evaluateOcrFiles } from "./ocr/index.js";
 
 export async function loadPath(inputPath: string, options: SmartLoaderOptions = {}): Promise<LoadResult> {
   const absolutePath = path.resolve(inputPath);
